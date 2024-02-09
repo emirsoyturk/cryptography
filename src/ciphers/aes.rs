@@ -28,9 +28,9 @@ impl AdvancedEncryptionStandard for AdvancedEncryptionStandard128Bit {
     fn add_round_key(&mut self, state: &mut [[u8; 4]; 4], round: &mut usize) {
         let round_key:&[[u8; 4]] = &self.key[*round * 4..(*round + 1) * 4];
 
-        for i in 0..4 {
+        for (i, item) in state.iter_mut().enumerate().take(4) {
             for j in 0..4 {
-                state[i][j] ^= round_key[j][i];
+                item[j] ^= round_key[j][i];
             }
         }
 
@@ -42,26 +42,25 @@ impl AdvancedEncryptionStandard for AdvancedEncryptionStandard128Bit {
     }
 
     fn shift_rows(&mut self, state: &mut [[u8; 4]; 4]) {
-        for i in 1..4 {
+        for (i, item) in state.iter_mut().enumerate().take(4).skip(1) {
             let mut temp = [0u8; 4];
             for ii in 0..4 {
-                temp[ii] = state[i][(i + ii) % 4];
+                temp[ii] = item[(i + ii) % 4];
             }
-            for ii in 0..4 {
-                state[i][ii] = temp[ii];
-            }
+
+            item.copy_from_slice(&temp);
         }
     }
 
     fn sub_bytes(&mut self, state: &mut [[u8; 4]; 4]) {
-        for i in 0..4 {
-            for j in 0..4 {
-                let byte = state[i][j];
-
+        for item in state.iter_mut().take(4) {
+            for item in item.iter_mut().take(4) {
+                let byte = *item;
+                
                 let row = (byte >> 4) as usize; 
                 let col = (byte & 0x0F) as usize; 
-
-                state[i][j] = SBOX[row][col]; 
+                
+                *item = SBOX[row][col]; 
             }
         }
     }

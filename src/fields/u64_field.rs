@@ -30,6 +30,6 @@ impl<const MODULUS: u64> Field for U64Field<MODULUS> {
     }
 
     fn eq(a: &u64, b: &u64) -> bool {
-        return *a == *b;
+        *a == *b
     }
 }
