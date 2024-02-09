@@ -3,7 +3,7 @@ use cryptography::Field;
 pub struct U64Field<const MODULUS: u64>;
 
 impl<const MODULUS: u64> Field for U64Field<MODULUS> {
-    type BaseType = u64;
+    type BaseType = u64; 
 
     fn add(a: &u64, b: &u64) -> u64 {
         ((*a as u128 + *b as u128) % MODULUS as u128) as u64

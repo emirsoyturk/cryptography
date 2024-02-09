@@ -22,3 +22,19 @@ pub trait Field {
     // eq
     fn eq(a: &Self::BaseType, b: &Self::BaseType) -> bool;
 }
+
+pub trait Cipher {
+    fn encrypt(&mut self, input: &[u8]) -> Vec<u8>;
+
+    fn decrypt(&mut self, input: &[u8]) -> Vec<u8>;
+}
+
+pub trait AdvancedEncryptionStandard {
+    fn sub_bytes(&mut self, state: &mut [[u8; 4]; 4]);
+    
+    fn shift_rows(&mut self, state: &mut [[u8; 4]; 4]);
+    
+    fn mix_columns(&mut self, state: &mut [[u8; 4]; 4]);
+    
+    fn add_round_key(&mut self);
+}

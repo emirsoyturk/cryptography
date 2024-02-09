@@ -133,7 +133,7 @@ mod tests {
     pub type U64TestField = U64Field<18446744069414584321>;
 
     #[test]
-    fn test_add_two_field_element() {
+    fn test_add_two_u64_field_element() {
         let a: FieldElement<U64TestField> = FieldElement::<U64TestField>::from(10);
         let b: FieldElement<U64TestField> = FieldElement::<U64TestField>::from(10);
 
@@ -144,7 +144,7 @@ mod tests {
     }
 
     #[test]
-    fn test_add_assign_two_field_element() {
+    fn test_add_assign_two_u64_field_element() {
         let mut a: FieldElement<U64TestField> = FieldElement::<U64TestField>::from(10);
         let b: FieldElement<U64TestField> = FieldElement::<U64TestField>::from(10);
 
@@ -155,7 +155,7 @@ mod tests {
     }
 
     #[test]
-    fn test_sub_two_field_element() {
+    fn test_sub_two_u64_field_element() {
         let a: FieldElement<U64TestField> = FieldElement::<U64TestField>::from(10);
         let b: FieldElement<U64TestField> = FieldElement::<U64TestField>::from(5);
 
@@ -166,7 +166,7 @@ mod tests {
     }
 
     #[test]
-    fn test_sub_assign_two_field_element() {
+    fn test_sub_assign_two_u64_field_element() {
         let mut a: FieldElement<U64TestField> = FieldElement::<U64TestField>::from(10);
         let b: FieldElement<U64TestField> = FieldElement::<U64TestField>::from(5);
 
@@ -177,7 +177,7 @@ mod tests {
     }
 
     #[test]
-    fn test_neg_field_element() {
+    fn test_neg_u64_field_element() {
         let a: FieldElement<U64TestField> = FieldElement::<U64TestField>::from(18446744069414584320);
 
         let c: FieldElement<U64TestField> = -&a;
@@ -187,7 +187,7 @@ mod tests {
     }
 
     #[test]
-    fn test_mul_field_element() {
+    fn test_mul_u64_field_element() {
         let a: FieldElement<U64TestField> = FieldElement::<U64TestField>::from(14);
         let b: FieldElement<U64TestField> = FieldElement::<U64TestField>::from(14);
 
@@ -198,7 +198,7 @@ mod tests {
     }
 
     #[test]
-    fn test_mul_assign_field_element() {
+    fn test_mul_assign_u64_field_element() {
         let mut a: FieldElement<U64TestField> = FieldElement::<U64TestField>::from(14);
         let b: FieldElement<U64TestField> = FieldElement::<U64TestField>::from(14);
 
