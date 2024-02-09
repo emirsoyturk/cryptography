@@ -36,5 +36,5 @@ pub trait AdvancedEncryptionStandard {
     
     fn mix_columns(&mut self, state: &mut [[u8; 4]; 4]);
     
-    fn add_round_key(&mut self);
+    fn add_round_key(&mut self, state: &mut [[u8; 4]; 4], round: &mut usize);
 }

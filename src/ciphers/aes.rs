@@ -23,22 +23,20 @@ static SBOX: [[u8; 16]; 16] =
 ];
 
 pub struct AdvancedEncryptionStandard128Bit {
-    key: [[u8; 4]; 4]
-}
-
-impl AdvancedEncryptionStandard128Bit {
-    fn clone_key(&self) -> [[u8; 4];4]{
-        self.key
-    }
+    key: [[u8; 4]; 48]
 }
 
 impl AdvancedEncryptionStandard for AdvancedEncryptionStandard128Bit {
-    fn add_round_key(&mut self) {
+    fn add_round_key(&mut self, mut state: &mut [[u8; 4]; 4], round: &mut usize) {
+        let round_key:&[[u8; 4]] = &self.key[*round * 4..(*round + 1) * 4];
+
         for i in 0..4 {
             for j in 0..4 {
-                self.key[i][j] = self.key[i][j] ^ self.key[j][i];
+                state[i][j] ^= round_key[j][i];
             }
         }
+
+        *round += 1;
     }
 
     fn mix_columns(&mut self, mut state: &mut [[u8; 4]; 4]) {
@@ -78,18 +76,22 @@ impl Cipher for AdvancedEncryptionStandard128Bit {
             }
         }
 
-        AdvancedEncryptionStandard::add_round_key(self);
+        let mut round: usize = 0;
+
+        AdvancedEncryptionStandard::add_round_key(self, &mut state, &mut round);
+
+        round += 1;
         
-        for i in 0..10 {
+        for _ in 0..10 {
             AdvancedEncryptionStandard::sub_bytes(self, &mut state);
             AdvancedEncryptionStandard::shift_rows(self, &mut state);
             AdvancedEncryptionStandard::mix_columns(self, &mut state);
-            AdvancedEncryptionStandard::add_round_key(self);
+            AdvancedEncryptionStandard::add_round_key(self, &mut state, &mut round);
         }
 
         AdvancedEncryptionStandard::sub_bytes(self, &mut state);
         AdvancedEncryptionStandard::shift_rows(self, &mut state);
-        AdvancedEncryptionStandard::add_round_key(self);
+        AdvancedEncryptionStandard::add_round_key(self, &mut state, &mut round);
 
         for i in 0..4 {
             for ii in 0..4 {
@@ -116,7 +118,7 @@ mod tests {
 
     #[test]
     fn test_shift_rows() {
-        let mut aes = AdvancedEncryptionStandard128Bit { key: [[0u8; 4]; 4] };
+        let mut aes = AdvancedEncryptionStandard128Bit { key: [[0u8; 4]; 48] };
         let mut state: [[u8; 4]; 4] = 
         [
             [1, 2, 3, 4],
@@ -126,11 +128,11 @@ mod tests {
         ];
 
         /*
-        BEFORE                  AFTER
-        1  2  3  4              1  2  3  4 
-        1  2  3  4              2  3  4  1 
-        5  6  7  8              7  8  5  6 
-        9  0  1  2              2  9  0  1 
+        BEFORE        AFTER
+        1  2  3  4    1  2  3  4 
+        1  2  3  4    2  3  4  1 
+        5  6  7  8    7  8  5  6 
+        9  0  1  2    2  9  0  1 
         */
 
         AdvancedEncryptionStandard::shift_rows(&mut aes, &mut state);
@@ -139,6 +141,54 @@ mod tests {
         assert_eq!(state[1], [2, 3, 4, 1], "Row 1 did not match expected output.");
         assert_eq!(state[2], [7, 8, 5, 6], "Row 2 did not match expected output.");
         assert_eq!(state[3], [2, 9, 0, 1], "Row 3 did not match expected output.");
+
+    }
+
+    #[test]
+    fn test_round_increase_by_add_round_key() {
+        let mut aes = AdvancedEncryptionStandard128Bit { key: [[0u8; 4]; 48] };
+        let mut state: [[u8; 4]; 4] = 
+        [
+            [1, 2, 3, 4],
+            [1, 2, 3, 4],
+            [5, 6, 7, 8],
+            [9, 0, 1, 2],
+        ];
+
+        let mut round: usize = 0;
+
+        AdvancedEncryptionStandard::add_round_key(&mut aes, &mut state, &mut round);
+        AdvancedEncryptionStandard::add_round_key(&mut aes, &mut state, &mut round);
+        AdvancedEncryptionStandard::add_round_key(&mut aes, &mut state, &mut round);
+
+        assert_eq!(round, 3, "Round is wrong!");
+    }
+
+    #[test]
+    fn test_add_round_key() {
+        let mut key: [[u8; 4]; 48] = [[0u8; 4]; 48];
+        key[0] = [4, 1, 4, 1];
+        key[1] = [3, 2, 3, 2];
+        key[2] = [2, 3, 2, 3];
+        key[3] = [1, 4, 1, 4];
+
+        let mut aes = AdvancedEncryptionStandard128Bit { key: key };
+        let mut state: [[u8; 4]; 4] = 
+        [
+            [4, 3, 2, 1],
+            [1, 2, 3, 4],
+            [4, 3, 2, 1],
+            [1, 2, 3, 4],
+        ];
+
+        let mut round: usize = 0;
+
+        AdvancedEncryptionStandard::add_round_key(&mut aes, &mut state, &mut round);
+
+        assert_eq!(state[0], [0, 0, 0, 0], "Row 0 did not match expected output.");
+        assert_eq!(state[1], [0, 0, 0, 0], "Row 1 did not match expected output.");
+        assert_eq!(state[2], [0, 0, 0, 0], "Row 2 did not match expected output.");
+        assert_eq!(state[3], [0, 0, 0, 0], "Row 3 did not match expected output.");
 
     }
 }
