@@ -1,5 +1,3 @@
-use std::os::macos::raw::stat;
-
 use cryptography::{AdvancedEncryptionStandard, Cipher};
 
 static SBOX: [[u8; 16]; 16] = 
@@ -27,7 +25,7 @@ pub struct AdvancedEncryptionStandard128Bit {
 }
 
 impl AdvancedEncryptionStandard for AdvancedEncryptionStandard128Bit {
-    fn add_round_key(&mut self, mut state: &mut [[u8; 4]; 4], round: &mut usize) {
+    fn add_round_key(&mut self, state: &mut [[u8; 4]; 4], round: &mut usize) {
         let round_key:&[[u8; 4]] = &self.key[*round * 4..(*round + 1) * 4];
 
         for i in 0..4 {
@@ -39,7 +37,7 @@ impl AdvancedEncryptionStandard for AdvancedEncryptionStandard128Bit {
         *round += 1;
     }
 
-    fn mix_columns(&mut self, mut state: &mut [[u8; 4]; 4]) {
+    fn mix_columns(&mut self, _state: &mut [[u8; 4]; 4]) {
         
     }
 
@@ -55,13 +53,19 @@ impl AdvancedEncryptionStandard for AdvancedEncryptionStandard128Bit {
         }
     }
 
-    fn sub_bytes(&mut self, mut state: &mut [[u8; 4]; 4]) {
+    fn sub_bytes(&mut self, state: &mut [[u8; 4]; 4]) {
         for i in 0..4 {
-            for ii in 0..4 {
-                state[i][ii] = SBOX[i % 16][ii % 16];
+            for j in 0..4 {
+                let byte = state[i][j];
+
+                let row = (byte >> 4) as usize; 
+                let col = (byte & 0x0F) as usize; 
+
+                state[i][j] = SBOX[row][col]; 
             }
         }
     }
+    
 }
 
 
@@ -157,9 +161,9 @@ mod tests {
 
         let mut round: usize = 0;
 
-        AdvancedEncryptionStandard::add_round_key(&mut aes, &mut state, &mut round);
-        AdvancedEncryptionStandard::add_round_key(&mut aes, &mut state, &mut round);
-        AdvancedEncryptionStandard::add_round_key(&mut aes, &mut state, &mut round);
+        for _ in 0..3 {
+            AdvancedEncryptionStandard::add_round_key(&mut aes, &mut state, &mut round);
+        }
 
         assert_eq!(round, 3, "Round is wrong!");
     }
@@ -190,5 +194,21 @@ mod tests {
         assert_eq!(state[2], [0, 0, 0, 0], "Row 2 did not match expected output.");
         assert_eq!(state[3], [0, 0, 0, 0], "Row 3 did not match expected output.");
 
+    }
+
+    #[test]
+    fn test_sub_bytes() {
+        let mut aes = AdvancedEncryptionStandard128Bit { key: [[0u8; 4]; 48] };
+        let mut state: [[u8; 4]; 4] = 
+        [
+            [0, 3, 69, 180],
+            [1, 2, 3, 4],
+            [4, 3, 2, 1],
+            [1, 2, 3, 4],
+        ];
+
+        AdvancedEncryptionStandard::sub_bytes(&mut aes, &mut state);
+
+        assert_eq!(state[0], [0x63, 0x7b, 0x6e, 0x8d], "Values did not match");
     }
 }
