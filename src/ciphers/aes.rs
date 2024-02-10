@@ -1,4 +1,4 @@
-use cryptography::{AdvancedEncryptionStandard, Cipher};
+use cryptography::{galois_multiplication, AdvancedEncryptionStandard, Cipher};
 
 static SBOX: [[u8; 16]; 16] = 
 [
@@ -37,8 +37,17 @@ impl AdvancedEncryptionStandard for AdvancedEncryptionStandard128Bit {
         *round += 1;
     }
 
-    fn mix_columns(&mut self, _state: &mut [[u8; 4]; 4]) {
-        
+    fn mix_columns(&mut self, state: &mut [[u8; 4]; 4]) {
+        let mut temp = [[0u8; 4]; 4];
+
+        for c in 0..4 {
+            temp[0][c] = galois_multiplication(0x02, state[0][c]) ^ galois_multiplication(0x03, state[1][c]) ^ state[2][c] ^ state[3][c];
+            temp[1][c] = state[0][c] ^ galois_multiplication(0x02, state[1][c]) ^ galois_multiplication(0x03, state[2][c]) ^ state[3][c];
+            temp[2][c] = state[0][c] ^ state[1][c] ^ galois_multiplication(0x02, state[2][c]) ^ galois_multiplication(0x03, state[3][c]);
+            temp[3][c] = galois_multiplication(0x03, state[0][c]) ^ state[1][c] ^ state[2][c] ^ galois_multiplication(0x02, state[3][c]);
+        }
+
+        state.copy_from_slice(&temp);
     }
 
     fn shift_rows(&mut self, state: &mut [[u8; 4]; 4]) {
@@ -209,5 +218,29 @@ mod tests {
         AdvancedEncryptionStandard::sub_bytes(&mut aes, &mut state);
 
         assert_eq!(state[0], [0x63, 0x7b, 0x6e, 0x8d], "Values did not match");
+    }
+
+    #[test]
+    fn test_mix_columns() {
+        let mut aes = AdvancedEncryptionStandard128Bit { key: [[0u8; 4]; 48] };
+        let mut state: [[u8; 4]; 4] = 
+        [
+            [0xc6, 0xf2, 0xdb, 0x2d],
+            [0xc6, 0x0a, 0x13, 0x26],
+            [0xc6, 0x22, 0x53, 0x31],
+            [0xc6, 0x5c, 0x45, 0x4c],
+        ];
+
+        AdvancedEncryptionStandard::mix_columns(&mut aes, &mut state);
+
+        let col1: Vec<u8> = state.iter().map(|s| *s.iter().nth(0).unwrap()).collect::<Vec<_>>();
+        let col2: Vec<u8> = state.iter().map(|s| *s.iter().nth(1).unwrap()).collect::<Vec<_>>();
+        let col3: Vec<u8> = state.iter().map(|s| *s.iter().nth(2).unwrap()).collect::<Vec<_>>();
+        let col4: Vec<u8> = state.iter().map(|s| *s.iter().nth(3).unwrap()).collect::<Vec<_>>();
+
+        assert_eq!(col1, [0xc6, 0xc6, 0xc6, 0xc6], "Values did not match");
+        assert_eq!(col2, [0x9f, 0xdc, 0x58, 0x9d], "Values did not match");
+        assert_eq!(col3, [0x8e, 0x4d, 0xa1, 0xbc], "Values did not match");
+        assert_eq!(col4, [0x4d, 0x7e, 0xbd, 0xf8], "Values did not match");
     }
 }

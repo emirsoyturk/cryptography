@@ -38,3 +38,27 @@ pub trait AdvancedEncryptionStandard {
     
     fn add_round_key(&mut self, state: &mut [[u8; 4]; 4], round: &mut usize);
 }
+
+pub fn galois_multiplication(a: u8, b: u8) -> u8 {
+    let mut p = 0u8;
+    let mut a = a;
+    let mut b = b;
+
+    for _ in 0..8 {
+        if (b & 1) != 0 {
+            p ^= a;
+        }
+
+        let bit_set: bool = (a & 0x80) != 0;
+
+        a <<= 1;
+
+        if bit_set {
+            a ^= 0x1B;
+        }
+
+        b >>= 1;
+    }
+
+    p
+} 
