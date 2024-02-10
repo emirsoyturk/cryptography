@@ -20,13 +20,42 @@ static SBOX: [[u8; 16]; 16] =
     [0x8c, 0xa1, 0x89, 0x0d, 0xbf, 0xe6, 0x42, 0x68, 0x41, 0x99, 0x2d, 0x0f, 0xb0, 0x54, 0xbb, 0x16],
 ];
 
+static RCON: [u8;10] = [0x01, 0x02, 0x04, 0x08, 0x10, 0x20, 0x40, 0x80, 0x1B, 0x36];
+
+
 pub struct AdvancedEncryptionStandard128Bit {
-    key: [[u8; 4]; 48]
+    round_keys: [[u8; 4]; 48]
 }
 
 impl AdvancedEncryptionStandard for AdvancedEncryptionStandard128Bit {
+    fn key_schedule(key: [[u8; 4]; 4]) -> [[u8; 4]; 44] {
+        let mut round_keys: [[u8; 4]; 44] = [[0; 4]; 44];
+    
+        round_keys[..4].copy_from_slice(&key);
+    
+        for i in 4..44 {
+            let mut temp = round_keys[i - 1];
+    
+            if i % 4 == 0 {
+                temp = [temp[1], temp[2], temp[3], temp[0]];
+    
+                for j in 0..4 {
+                    temp[j] = SBOX[(temp[j] >> 4) as usize][(temp[j] & 0x0F) as usize];
+                }
+    
+                temp[0] ^= RCON[i / 4 - 1];
+            }
+    
+            for (j, item) in temp.iter().enumerate() {
+                round_keys[i][j] = round_keys[i - 4][j] ^ item;
+            }
+        }
+    
+        round_keys
+    }
+
     fn add_round_key(&mut self, state: &mut [[u8; 4]; 4], round: &mut usize) {
-        let round_key:&[[u8; 4]] = &self.key[*round * 4..(*round + 1) * 4];
+        let round_key:&[[u8; 4]] = &self.round_keys[*round * 4..(*round + 1) * 4];
 
         for (i, item) in state.iter_mut().enumerate().take(4) {
             for j in 0..4 {
@@ -103,6 +132,7 @@ impl Cipher for AdvancedEncryptionStandard128Bit {
 
         AdvancedEncryptionStandard::sub_bytes(self, &mut state);
         AdvancedEncryptionStandard::shift_rows(self, &mut state);
+        round-=1;
         AdvancedEncryptionStandard::add_round_key(self, &mut state, &mut round);
 
         for i in 0..4 {
@@ -130,7 +160,8 @@ mod tests {
 
     #[test]
     fn test_shift_rows() {
-        let mut aes = AdvancedEncryptionStandard128Bit { key: [[0u8; 4]; 48] };
+        let round_keys = [[0u8; 4]; 48];
+        let mut aes = AdvancedEncryptionStandard128Bit { round_keys};
         let mut state: [[u8; 4]; 4] = 
         [
             [1, 2, 3, 4],
@@ -149,16 +180,19 @@ mod tests {
 
         AdvancedEncryptionStandard::shift_rows(&mut aes, &mut state);
 
-        assert_eq!(state[0], [1, 2, 3, 4], "Row 0 did not match expected output.");
-        assert_eq!(state[1], [2, 3, 4, 1], "Row 1 did not match expected output.");
-        assert_eq!(state[2], [7, 8, 5, 6], "Row 2 did not match expected output.");
-        assert_eq!(state[3], [2, 9, 0, 1], "Row 3 did not match expected output.");
+        assert_eq!(state[0], [1, 2, 3, 4], "Row 0 d not match expected output.");
+        assert_eq!(state[1], [2, 3, 4, 1], "Row 1 d not match expected output.");
+        assert_eq!(state[2], [7, 8, 5, 6], "Row 2 d not match expected output.");
+        assert_eq!(state[3], [2, 9, 0, 1], "Row 3 d not match expected output.");
 
     }
 
     #[test]
     fn test_round_increase_by_add_round_key() {
-        let mut aes = AdvancedEncryptionStandard128Bit { key: [[0u8; 4]; 48] };
+        let round_keys = [[0u8; 4]; 48];
+
+        let mut aes = AdvancedEncryptionStandard128Bit { round_keys};        
+        
         let mut state: [[u8; 4]; 4] = 
         [
             [1, 2, 3, 4],
@@ -178,13 +212,13 @@ mod tests {
 
     #[test]
     fn test_add_round_key() {
-        let mut key: [[u8; 4]; 48] = [[0u8; 4]; 48];
-        key[0] = [4, 1, 4, 1];
-        key[1] = [3, 2, 3, 2];
-        key[2] = [2, 3, 2, 3];
-        key[3] = [1, 4, 1, 4];
+        let mut round_keys = [[0u8; 4]; 48];
+        round_keys[0] = [4, 1, 4, 1];
+        round_keys[1] = [3, 2, 3, 2];
+        round_keys[2] = [2, 3, 2, 3];
+        round_keys[3] = [1, 4, 1, 4];
 
-        let mut aes = AdvancedEncryptionStandard128Bit { key: key };
+        let mut aes = AdvancedEncryptionStandard128Bit { round_keys };
         let mut state: [[u8; 4]; 4] = 
         [
             [4, 3, 2, 1],
@@ -197,16 +231,18 @@ mod tests {
 
         AdvancedEncryptionStandard::add_round_key(&mut aes, &mut state, &mut round);
 
-        assert_eq!(state[0], [0, 0, 0, 0], "Row 0 did not match expected output.");
-        assert_eq!(state[1], [0, 0, 0, 0], "Row 1 did not match expected output.");
-        assert_eq!(state[2], [0, 0, 0, 0], "Row 2 did not match expected output.");
-        assert_eq!(state[3], [0, 0, 0, 0], "Row 3 did not match expected output.");
+        assert_eq!(state[0], [0, 0, 0, 0], "Row 0 d not match expected output.");
+        assert_eq!(state[1], [0, 0, 0, 0], "Row 1 d not match expected output.");
+        assert_eq!(state[2], [0, 0, 0, 0], "Row 2 d not match expected output.");
+        assert_eq!(state[3], [0, 0, 0, 0], "Row 3 d not match expected output.");
 
     }
 
     #[test]
     fn test_sub_bytes() {
-        let mut aes = AdvancedEncryptionStandard128Bit { key: [[0u8; 4]; 48] };
+        let round_keys: [[u8; 4]; 48] = [[0u8; 4]; 48];
+
+        let mut aes = AdvancedEncryptionStandard128Bit { round_keys };
         let mut state: [[u8; 4]; 4] = 
         [
             [0, 3, 69, 180],
@@ -217,12 +253,14 @@ mod tests {
 
         AdvancedEncryptionStandard::sub_bytes(&mut aes, &mut state);
 
-        assert_eq!(state[0], [0x63, 0x7b, 0x6e, 0x8d], "Values did not match");
+        assert_eq!(state[0], [0x63, 0x7b, 0x6e, 0x8d], "Values d not match");
     }
 
     #[test]
     fn test_mix_columns() {
-        let mut aes = AdvancedEncryptionStandard128Bit { key: [[0u8; 4]; 48] };
+        let round_keys: [[u8; 4]; 48] = [[0u8; 4]; 48];
+
+        let mut aes = AdvancedEncryptionStandard128Bit { round_keys };
         let mut state: [[u8; 4]; 4] = 
         [
             [0xc6, 0xf2, 0xdb, 0x2d],
@@ -238,9 +276,41 @@ mod tests {
         let col3: Vec<u8> = state.iter().map(|s| *s.iter().nth(2).unwrap()).collect::<Vec<_>>();
         let col4: Vec<u8> = state.iter().map(|s| *s.iter().nth(3).unwrap()).collect::<Vec<_>>();
 
-        assert_eq!(col1, [0xc6, 0xc6, 0xc6, 0xc6], "Values did not match");
-        assert_eq!(col2, [0x9f, 0xdc, 0x58, 0x9d], "Values did not match");
-        assert_eq!(col3, [0x8e, 0x4d, 0xa1, 0xbc], "Values did not match");
-        assert_eq!(col4, [0x4d, 0x7e, 0xbd, 0xf8], "Values did not match");
+        assert_eq!(col1, [0xc6, 0xc6, 0xc6, 0xc6], "Values d not match");
+        assert_eq!(col2, [0x9f, 0xdc, 0x58, 0x9d], "Values d not match");
+        assert_eq!(col3, [0x8e, 0x4d, 0xa1, 0xbc], "Values d not match");
+        assert_eq!(col4, [0x4d, 0x7e, 0xbd, 0xf8], "Values d not match");
+    }
+
+    #[test]
+    fn test_key_schedule() {
+        let base_key: [[u8; 4]; 4] = [
+            [0x00, 0x00, 0x00, 0x00],
+            [0x00, 0x00, 0x00, 0x00],
+            [0x00, 0x00, 0x00, 0x00],
+            [0x00, 0x00, 0x00, 0x00]
+        ];
+
+        let expected_round_keys: [[[u8; 4]; 4]; 11] = 
+        [
+            [[0x00, 0x00, 0x00, 0x00], [0x00, 0x00, 0x00, 0x00], [0x00, 0x00, 0x00, 0x00], [0x00, 0x00, 0x00, 0x00]],
+            [[0x62, 0x63, 0x63, 0x63], [0x62, 0x63, 0x63, 0x63], [0x62, 0x63, 0x63, 0x63], [0x62, 0x63, 0x63, 0x63]],
+            [[0x9b, 0x98, 0x98, 0xc9], [0xf9, 0xfb, 0xfb, 0xaa], [0x9b, 0x98, 0x98, 0xc9], [0xf9, 0xfb, 0xfb, 0xaa]], 
+            [[0x90, 0x97, 0x34, 0x50], [0x69, 0x6c, 0xcf, 0xfa], [0xf2, 0xf4, 0x57, 0x33], [0x0b, 0x0f, 0xac, 0x99]],
+            [[0xee, 0x06, 0xda, 0x7b], [0x87, 0x6a, 0x15, 0x81], [0x75, 0x9e, 0x42, 0xb2], [0x7e, 0x91, 0xee, 0x2b]],
+            [[0x7f, 0x2e, 0x2b, 0x88], [0xf8, 0x44, 0x3e, 0x09], [0x8d, 0xda, 0x7c, 0xbb], [0xf3, 0x4b, 0x92, 0x90]],
+            [[0xec, 0x61, 0x4b, 0x85], [0x14, 0x25, 0x75, 0x8c], [0x99, 0xff, 0x09, 0x37], [0x6a, 0xb4, 0x9b, 0xa7]],
+            [[0x21, 0x75, 0x17, 0x87], [0x35, 0x50, 0x62, 0x0b], [0xac, 0xaf, 0x6b, 0x3c], [0xc6, 0x1b, 0xf0, 0x9b]],
+            [[0x0e, 0xf9, 0x03, 0x33], [0x3b, 0xa9, 0x61, 0x38], [0x97, 0x06, 0x0a, 0x04], [0x51, 0x1d, 0xfa, 0x9f]],
+            [[0xb1, 0xd4, 0xd8, 0xe2], [0x8a, 0x7d, 0xb9, 0xda], [0x1d, 0x7b, 0xb3, 0xde], [0x4c, 0x66, 0x49, 0x41]],
+            [[0xb4, 0xef, 0x5b, 0xcb], [0x3e, 0x92, 0xe2, 0x11], [0x23, 0xe9, 0x51, 0xcf], [0x6f, 0x8f, 0x18, 0x8e]]
+        ];
+
+        let round_keys = AdvancedEncryptionStandard128Bit::key_schedule(base_key);
+
+        for (i, expected_key) in expected_round_keys.iter().enumerate() {
+            assert_eq!(round_keys[i*4..(i + 1) * 4], *expected_key, "Round {}: Key schedule does not match expected value", i);
+        }
+
     }
 }

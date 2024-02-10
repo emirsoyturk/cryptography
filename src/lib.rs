@@ -30,6 +30,8 @@ pub trait Cipher {
 }
 
 pub trait AdvancedEncryptionStandard {
+    fn key_schedule(key: [[u8; 4]; 4]) -> [[u8; 4]; 44];
+
     fn sub_bytes(&mut self, state: &mut [[u8; 4]; 4]);
     
     fn shift_rows(&mut self, state: &mut [[u8; 4]; 4]);
