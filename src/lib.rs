@@ -33,12 +33,18 @@ pub trait AdvancedEncryptionStandard {
     fn key_schedule(key: [[u8; 4]; 4]) -> [[u8; 4]; 44];
 
     fn sub_bytes(&mut self, state: &mut [[u8; 4]; 4]);
+
+    fn sub_bytes_inversed(&mut self, state: &mut [[u8; 4]; 4]);
     
     fn shift_rows(&mut self, state: &mut [[u8; 4]; 4]);
+
+    fn shift_rows_inversed(&mut self, state: &mut [[u8; 4]; 4]);
     
     fn mix_columns(&mut self, state: &mut [[u8; 4]; 4]);
+
+    fn mix_columns_inversed(&mut self, state: &mut [[u8; 4]; 4]);
     
-    fn add_round_key(&mut self, state: &mut [[u8; 4]; 4], round: &mut usize);
+    fn add_round_key(&mut self, state: &mut [[u8; 4]; 4], round: &mut usize, inversed: bool);
 }
 
 pub fn galois_multiplication(a: u8, b: u8) -> u8 {
