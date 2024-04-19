@@ -1,8 +1,9 @@
 use cryptography::Field;
 use std::ops::{Add, AddAssign, Mul, MulAssign, Neg, Sub, SubAssign};
 
+#[derive(Debug)]
 pub struct FieldElement<F: Field> {
-    value: F::BaseType
+    pub value: F::BaseType,
 }
 
 impl<F> Add<&FieldElement<F>> for &FieldElement<F>
@@ -18,79 +19,77 @@ where
     }
 }
 
-impl <F> Sub<&FieldElement<F>> for &FieldElement<F> 
-where 
-    F: Field
+impl<F> Sub<&FieldElement<F>> for &FieldElement<F>
+where
+    F: Field,
 {
     type Output = FieldElement<F>;
-    
+
     fn sub(self, other: &FieldElement<F>) -> Self::Output {
         Self::Output {
-            value: <F as Field>::sub(&self.value, &other.value)
+            value: <F as Field>::sub(&self.value, &other.value),
         }
     }
 }
 
-impl <F> Mul<&FieldElement<F>> for &FieldElement<F> 
-where 
-    F: Field
+impl<F> Mul<&FieldElement<F>> for &FieldElement<F>
+where
+    F: Field,
 {
     type Output = FieldElement<F>;
-    
+
     fn mul(self, other: &FieldElement<F>) -> Self::Output {
         Self::Output {
-            value: <F as Field>::mul(&self.value, &other.value)
+            value: <F as Field>::mul(&self.value, &other.value),
         }
     }
 }
 
-impl <F> Neg<> for &FieldElement<F> 
-where 
-    F: Field
+impl<F> Neg for &FieldElement<F>
+where
+    F: Field,
 {
     type Output = FieldElement<F>;
-    
+
     fn neg(self) -> Self::Output {
         Self::Output {
-            value: <F as Field>::neg(&self.value)
+            value: <F as Field>::neg(&self.value),
         }
     }
 }
 
-impl <F> AddAssign<&FieldElement<F>> for FieldElement<F> 
-where 
-    F: Field
-{    
+impl<F> AddAssign<&FieldElement<F>> for FieldElement<F>
+where
+    F: Field,
+{
     fn add_assign(&mut self, other: &FieldElement<F>) {
         *self = FieldElement::<F> {
-            value: (<F as Field>::add(&self.value, &other.value))
+            value: (<F as Field>::add(&self.value, &other.value)),
         }
     }
 }
 
-impl <F> SubAssign<&FieldElement<F>> for FieldElement<F> 
-where 
-    F: Field
-{    
+impl<F> SubAssign<&FieldElement<F>> for FieldElement<F>
+where
+    F: Field,
+{
     fn sub_assign(&mut self, other: &FieldElement<F>) {
         *self = FieldElement::<F> {
-            value: (<F as Field>::sub(&self.value, &other.value))
+            value: (<F as Field>::sub(&self.value, &other.value)),
         }
     }
 }
 
-
-impl <F> MulAssign<&FieldElement<F>> for FieldElement<F> 
-where 
-    F: Field
-{    
+impl<F> MulAssign<&FieldElement<F>> for FieldElement<F>
+where
+    F: Field,
+{
     fn mul_assign(&mut self, other: &FieldElement<F>) {
         *self = FieldElement::<F> {
-            value: (<F as Field>::mul(&self.value, &other.value))
+            value: (<F as Field>::mul(&self.value, &other.value)),
         }
     }
 }
-
 
 impl<F> From<&F::BaseType> for FieldElement<F>
 where
@@ -124,11 +123,32 @@ where
     }
 }
 
+impl<F> FieldElement<F>
+where
+    F: Field,
+{
+    pub fn pow(&self, exp: &F::BaseType) -> FieldElement<F> {
+        FieldElement::<F> {
+            value: F::pow(&self.value, exp),
+        }
+    }
+
+    pub fn is_prime(&self) -> bool {
+        F::is_prime(&self.value)
+    }
+
+    pub fn inv(&self, m: &FieldElement<F>) -> Option<FieldElement<F>> {
+        match F::inv(&self.value, &m.value) {
+            Some(value) => Some(FieldElement::<F> { value }),
+            None => None,
+        }
+    }
+}
 
 #[cfg(test)]
 mod tests {
-    use crate::fields::u64_field::U64Field;
     use super::FieldElement;
+    use crate::fields::u64_field::U64Field;
 
     pub type U64TestField = U64Field<18446744069414584321>;
 
@@ -170,7 +190,7 @@ mod tests {
         let mut a: FieldElement<U64TestField> = FieldElement::<U64TestField>::from(10);
         let b: FieldElement<U64TestField> = FieldElement::<U64TestField>::from(5);
 
-        a -= &b;        
+        a -= &b;
 
         assert!(a == FieldElement::<U64TestField>::from(5));
         assert!(a.value == 5);
@@ -178,7 +198,8 @@ mod tests {
 
     #[test]
     fn test_neg_u64_field_element() {
-        let a: FieldElement<U64TestField> = FieldElement::<U64TestField>::from(18446744069414584320);
+        let a: FieldElement<U64TestField> =
+            FieldElement::<U64TestField>::from(18446744069414584320);
 
         let c: FieldElement<U64TestField> = -&a;
 

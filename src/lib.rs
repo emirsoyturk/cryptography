@@ -21,6 +21,18 @@ pub trait Field {
 
     // eq
     fn eq(a: &Self::BaseType, b: &Self::BaseType) -> bool;
+
+    // is prime
+    fn is_prime(a: &Self::BaseType) -> bool;
+
+    // gcd
+    fn gcd(a: Self::BaseType, b: Self::BaseType) -> Self::BaseType;
+
+    // modular exponentiation
+    fn exp(a: &Self::BaseType, b: &Self::BaseType, m: &Self::BaseType) -> Self::BaseType;
+
+    // modular inverse
+    fn inv(a: &Self::BaseType, m: &Self::BaseType) -> Option<Self::BaseType>;
 }
 
 pub trait Cipher {
@@ -35,15 +47,15 @@ pub trait AdvancedEncryptionStandard {
     fn sub_bytes(&mut self, state: &mut [[u8; 4]; 4]);
 
     fn sub_bytes_inversed(&mut self, state: &mut [[u8; 4]; 4]);
-    
+
     fn shift_rows(&mut self, state: &mut [[u8; 4]; 4]);
 
     fn shift_rows_inversed(&mut self, state: &mut [[u8; 4]; 4]);
-    
+
     fn mix_columns(&mut self, state: &mut [[u8; 4]; 4]);
 
     fn mix_columns_inversed(&mut self, state: &mut [[u8; 4]; 4]);
-    
+
     fn add_round_key(&mut self, state: &mut [[u8; 4]; 4], round: &mut usize, inversed: bool);
 }
 
@@ -73,19 +85,19 @@ pub fn galois_multiplication(a: u8, b: u8) -> u8 {
     }
 
     p
-} 
+}
 
 #[derive(Clone, Copy, PartialEq, Debug)]
 pub enum Number {
     Float32(f32),
-    Float64(f64)
+    Float64(f64),
 }
 
 impl std::fmt::Display for Number {
     fn fmt(&self, f: &mut std::fmt::Formatter) -> std::fmt::Result {
         match self {
             Number::Float32(value) => write!(f, "{}", value),
-            Number::Float64(value) => write!(f, "{}", value)
+            Number::Float64(value) => write!(f, "{}", value),
         }
     }
 }
@@ -97,12 +109,12 @@ impl std::ops::Add for Number {
         match self {
             Number::Float32(value) => match other {
                 Number::Float32(other_value) => Number::Float32(value + other_value),
-                Number::Float64(other_value) => Number::Float64(value as f64 + other_value)
+                Number::Float64(other_value) => Number::Float64(value as f64 + other_value),
             },
             Number::Float64(value) => match other {
                 Number::Float32(other_value) => Number::Float64(value + other_value as f64),
-                Number::Float64(other_value) => Number::Float64(value + other_value)
-            }
+                Number::Float64(other_value) => Number::Float64(value + other_value),
+            },
         }
     }
 }
@@ -114,12 +126,12 @@ impl std::ops::Sub for Number {
         match self {
             Number::Float32(value) => match other {
                 Number::Float32(other_value) => Number::Float32(value - other_value),
-                Number::Float64(other_value) => Number::Float64(value as f64 - other_value)
+                Number::Float64(other_value) => Number::Float64(value as f64 - other_value),
             },
             Number::Float64(value) => match other {
                 Number::Float32(other_value) => Number::Float64(value - other_value as f64),
-                Number::Float64(other_value) => Number::Float64(value - other_value)
-            }
+                Number::Float64(other_value) => Number::Float64(value - other_value),
+            },
         }
     }
 }
@@ -131,12 +143,12 @@ impl std::ops::Mul for Number {
         match self {
             Number::Float32(value) => match other {
                 Number::Float32(other_value) => Number::Float32(value * other_value),
-                Number::Float64(other_value) => Number::Float64(value as f64 * other_value)
+                Number::Float64(other_value) => Number::Float64(value as f64 * other_value),
             },
             Number::Float64(value) => match other {
                 Number::Float32(other_value) => Number::Float64(value * other_value as f64),
-                Number::Float64(other_value) => Number::Float64(value * other_value)
-            }
+                Number::Float64(other_value) => Number::Float64(value * other_value),
+            },
         }
     }
 }
@@ -148,12 +160,12 @@ impl std::ops::Div for Number {
         match self {
             Number::Float32(value) => match other {
                 Number::Float32(other_value) => Number::Float32(value / other_value),
-                Number::Float64(other_value) => Number::Float64(value as f64 / other_value)
+                Number::Float64(other_value) => Number::Float64(value as f64 / other_value),
             },
             Number::Float64(value) => match other {
                 Number::Float32(other_value) => Number::Float64(value / other_value as f64),
-                Number::Float64(other_value) => Number::Float64(value / other_value)
-            }
+                Number::Float64(other_value) => Number::Float64(value / other_value),
+            },
         }
     }
 }
@@ -170,9 +182,7 @@ impl std::convert::From<f64> for Number {
     }
 }
 
-
-
 pub struct Point {
     pub x: Number,
-    pub y: Number
+    pub y: Number,
 }
