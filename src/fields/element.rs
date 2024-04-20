@@ -138,10 +138,7 @@ where
     }
 
     pub fn inv(&self, m: &FieldElement<F>) -> Option<FieldElement<F>> {
-        match F::inv(&self.value, &m.value) {
-            Some(value) => Some(FieldElement::<F> { value }),
-            None => None,
-        }
+        F::inv(&self.value, &m.value).map(|value| FieldElement::<F> { value })
     }
 }
 

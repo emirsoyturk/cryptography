@@ -1,7 +1,7 @@
 use num_bigint::BigUint;
 use num_traits::ToPrimitive;
 
-use crate::prime::prime::Prime;
+use crate::primes::prime::Prime;
 
 pub struct RSA {
     e: BigUint,
@@ -11,13 +11,13 @@ pub struct RSA {
 
 impl RSA {
     pub fn new() -> Result<Self, &'static str> {
-        let p = Prime::random_prime();
-        let q = Prime::random_prime();
+        let p = BigUint::random_prime();
+        let q = BigUint::random_prime();
 
         let n: BigUint = &p * &q;
         let fi = (&p - BigUint::from(1u64)) * (&q - BigUint::from(1u64));
-        let e = Prime::random_prime();
-        let d = match Prime::mod_inv(e.clone(), fi.clone()) {
+        let e = BigUint::random_prime();
+        let d = match e.mod_inv(&fi) {
             Some(d) => d,
             None => return Err("e has no modular inverse"),
         };
