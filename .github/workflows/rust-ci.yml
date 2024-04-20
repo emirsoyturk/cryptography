@@ -12,7 +12,7 @@ jobs:
 
     steps:
       - name: "Set up Rust"
-        uses: actions/chekout@v2
+        uses: actions/checkout@v2
       - name: "Install cargo-audit"
         run: cargo install cargo-audit
       - name: "Build"
