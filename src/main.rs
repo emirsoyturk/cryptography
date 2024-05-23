@@ -1,5 +1,6 @@
 // pub mod arithmetization;
 pub mod ciphers;
+pub mod commitments;
 pub mod fields;
 pub mod hash;
 pub mod pk;

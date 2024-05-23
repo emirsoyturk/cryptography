@@ -39,39 +39,39 @@ mod tests {
         let mut lagrange = LagrangeInterpolation::new();
         let points = vec![
             Point {
-                x: Number::from(1.0 as f32),
-                y: Number::from(1.0 as f32),
+                x: Number::from(1.0_f32),
+                y: Number::from(1.0_f32),
             },
             Point {
-                x: Number::from(2.0 as f32),
-                y: Number::from(2.0 as f32),
+                x: Number::from(2.0_f32),
+                y: Number::from(2.0_f32),
             },
             Point {
-                x: Number::from(3.0 as f32),
-                y: Number::from(3.0 as f32),
+                x: Number::from(3.0_f32),
+                y: Number::from(3.0_f32),
             },
         ];
-        let result = lagrange.interpolate(points, Number::from(4.0 as f32));
-        assert_eq!(result, Number::from(4.0 as f64));
+        let result = lagrange.interpolate(points, Number::from(4.0_f32));
+        assert_eq!(result, Number::from(4.0_f64));
     }
     #[test]
     fn test_lagrange_float_64() {
         let mut lagrange = LagrangeInterpolation::new();
         let points = vec![
             Point {
-                x: Number::from(1.0 as f64),
-                y: Number::from(1.0 as f64),
+                x: Number::from(1.0_f64),
+                y: Number::from(1.0_f64),
             },
             Point {
-                x: Number::from(2.0 as f64),
-                y: Number::from(2.0 as f64),
+                x: Number::from(2.0_f64),
+                y: Number::from(2.0_f64),
             },
             Point {
-                x: Number::from(3.0 as f64),
-                y: Number::from(3.0 as f64),
+                x: Number::from(3.0_f64),
+                y: Number::from(3.0_f64),
             },
         ];
-        let result = lagrange.interpolate(points, Number::from(4.0 as f64));
-        assert_eq!(result, Number::from(4.0 as f64));
+        let result = lagrange.interpolate(points, Number::from(4.0_f64));
+        assert_eq!(result, Number::from(4.0_f64));
     }
 }

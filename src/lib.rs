@@ -1,3 +1,5 @@
+use num_bigint::BigUint;
+
 pub trait Field {
     type BaseType: Clone;
 
@@ -63,6 +65,12 @@ pub trait HashFunction {
     fn hash(&mut self, input: &[u8]) -> Vec<u8>;
 }
 
+pub trait Commitment {
+    fn setup(&mut self, security: u64);
+    fn setup_with_params(&mut self, p: BigUint, q: BigUint, g: BigUint, h: BigUint);
+    fn commit(&mut self, input: &[u8]) -> Vec<u8>;
+    fn verify(&mut self, input: &[u8], commitment: &[u8]) -> bool;
+}
 pub fn galois_multiplication(a: u8, b: u8) -> u8 {
     let mut p = 0u8;
     let mut a = a;

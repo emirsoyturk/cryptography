@@ -1,2 +1,2 @@
 pub mod aes;
-// pub mod rc5;
+pub mod rc5;
